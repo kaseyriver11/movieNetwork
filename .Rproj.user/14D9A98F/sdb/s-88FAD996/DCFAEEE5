@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "\n#' Pull information from TMDB API\n#' @description Combine Api pull functions 'pull_movie_titles', and 'pull_cast' to create\n#' a dataframe that a network can be built from\n#' @param api_key Api key requested from the website\n#' @param genres genres of interest can include: 'Action', 'Adventure', 'Animation',\n#'  'Comedy', 'Crime','Documentary', 'Drama', 'Family', 'Fantasy', 'History',\n#'  'Horror', 'Music', 'Mystery', 'Romance', 'Science Fiction', 'TV Movie', 'Thriller',\n#'   'War', 'Western'\n#' @param min_date Min release date in the format 'yyyy-mm-dd'\n#' @param max_date Max release date in the format 'yyyy-mm-dd'\n#' @param movie_request_lim Limit on the number of movies to pull\n#' @return A data frame containing movie titles and associated cast & crew\n#' @export\n\ncreate_network_df <- function(api_key, genres, min_date, max_date, movie_request_lim = 100){\n  movie_df <- pull_movie_titles(api_key, genres, min_date, max_date, movie_request_lim)\n\n  movie_df$movie_id %>%  #apply pull_cast over each movie id\n    lapply(function(movie_id){\n      Sys.sleep(.255) # there is a limit of 40 queries/10sec (By ip address so key does not matter)\n      return(pull_cast(api_key, movie_id)) }) %>%\n    bind_rows() %>% #bind each api pull into a single data.frame\n    inner_join(movie_df, by = 'movie_id') -> final_df\n}\n\n\n\n\n\n",
+    "created" : 1490368080072.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "180139668",
+    "id" : "DCFAEEE5",
+    "lastKnownWriteTime" : 1490371054,
+    "last_content_update" : 1490371054357,
+    "path" : "~/Network Analysis/movieNetwork/R/create_network_data.R",
+    "project_path" : "R/create_network_data.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

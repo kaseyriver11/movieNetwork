@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "\n#' Pull information on the cast of a movie\n#' @description Use tmdb api to return the cast of a movie given the tmdb movie id\n#' @param api_key Api key of tmdb\n#' @param movie_id Movie id of interest\n#' @return Dataframe of the cast for the movie of interest\n#' @export\n\npull_cast <- function(api_key, movie_id){\n\n  url <- create_cast_url(api_key, movie_id)\n  cast_crew_data <- jsonlite::fromJSON(url, simplifyDataFrame = T)\n\n  cast_crew_data$cast %>%\n    select(id, name, character) %>%\n    mutate(cast_crew = 'cast') %>%\n    rename(role = character) %>%\n    rbind(  cast_data$crew %>%\n              select(id, name, job) %>%\n              mutate(cast_crew = 'crew') %>%\n              rename(role = job)  ) %>%\n    mutate(movie_id = movie_id) -> cast_crew_data\n\n\n  return(cast_crew_data)\n}\n\n\n\n#' Create the cast url\n#' @description Given the api key and movie id, create the url needed to pass to the api\n#' @param api_key Api key of tmdb\n#' @param movie_id Movie id of interest\n#' @return url needed to pass to the api\n#' @export\n\ncreate_cast_url <- function(api_key, movie_id){\n  return( paste0('https://api.themoviedb.org/3/',\n         'movie/', movie_id,'/credits?',\n         'api_key=',api_key) )\n}\n\n\n\n\n\n\n\n\n",
+    "created" : 1490366435628.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4181473330",
+    "id" : "3E772713",
+    "lastKnownWriteTime" : 1490371121,
+    "last_content_update" : 1490371121290,
+    "path" : "~/Network Analysis/movieNetwork/R/tmdb_api_cast.R",
+    "project_path" : "R/tmdb_api_cast.R",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
