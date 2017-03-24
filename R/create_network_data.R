@@ -22,6 +22,8 @@ create_network_df <- function(api_key, genres, min_date, max_date, movie_request
       return(pull_cast(api_key, movie_id)) }) %>%
     bind_rows() %>% #bind each api pull into a single data.frame
     inner_join(movie_df, by = 'movie_id') -> final_df
+
+  return(final_df)
 }
 
 
