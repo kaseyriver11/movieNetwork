@@ -15,7 +15,7 @@ pull_cast <- function(api_key, movie_id){
     select(id, name, character) %>%
     mutate(cast_crew = 'cast') %>%
     rename(role = character) %>%
-    rbind(  cast_data$crew %>%
+    rbind(  cast_crew_data$crew %>%
               select(id, name, job) %>%
               mutate(cast_crew = 'crew') %>%
               rename(role = job)  ) %>%
