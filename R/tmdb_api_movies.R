@@ -42,7 +42,7 @@ pull_movie_titles <- function(api_key, genres, min_date, max_date, movie_request
 
   #The genres were a list withim a dataframe. This converts the list into a vector
   tmdb_data %>%
-    mutate(genre_ids = sapply(tmdb_data$genre_ids, function(x) paste0(x, collapse = ',')) %>%
+    mutate(genre_ids = sapply(df$genre_ids, function(x) paste0(x, collapse = ',')) %>%
              unlist) %>%
     rename(movie_id = id) %>%
     select(-poster_path, -adult, -backdrop_path, -video)-> tmdb_data
