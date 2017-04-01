@@ -13,7 +13,8 @@
 #' @return A data frame containing movie titles along with movie attributes
 #' @export
 #'
-library(tidyverse)
+library(dplyr)
+library(tidyr)
 pull_movie_titles <- function(api_key, genres, min_date, max_date, movie_request_lim = 100){
 
   #Set the page limit (one page returns 20 movies)
