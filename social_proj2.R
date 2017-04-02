@@ -39,10 +39,18 @@ for(i in 1:length(movies)){
         count = count - 1
         source <- rep(currentDF[j,"name"], (columns-j))
         target <- currentDF$name[(j+1):columns]
-        c <- as.data.frame(cbind(source,target))
+        c <- data.frame(source = source,target = target)
         frame <- rbind(frame,c)
     }
 }
+
+frame$source <- as.character(frame$source)
+frame$target <- as.character(frame$target)
+# Grab the Unique names of the actors
+keep <- unique(c(frame$source, frame$target))
+names <- unique(df$name[(df$name %in% keep)])
+ID <- 0:(length(names)-1)
+
 # Convert to character
 frame$source <- as.character(frame$source)
 frame$target <- as.character(frame$target)
@@ -52,11 +60,6 @@ for(i in 1:length(frame)){
   frame[i,1] <- a[1]
   frame[i,2] <- a[2]
 }
-
-# Grab the Unique names of the actors
-keep <- unique(c(frame$source, frame$target))
-names <- unique(df$name[(df$name %in% keep)])
-ID <- 0:(length(names)-1)
 
 
 convertDF <- data.frame(Names=names, ID = ID)

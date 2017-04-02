@@ -4,13 +4,14 @@
 library(shiny)
 library(dplyr)
 library(tidyr)
+library(igraph)
+library(Hmisc)
 
 library(movieNetwork)
 library(networkD3)
 
 genreList <- movieNetwork::load_genres()$name
 
-load("action2000.Rda")
-load("comedy2000.Rda")
-
+action2000 <- read.csv("data/action2000.csv", stringsAsFactors = FALSE)
+comedy2000 <- read.csv("data/comedy2000.csv", stringsAsFactors = FALSE)
 
