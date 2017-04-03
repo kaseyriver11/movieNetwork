@@ -14,8 +14,8 @@ sidebarLayout(
   sidebarPanel(width = 3,
 
                selectInput("network", "Select Network:",
-                           choices = c("Top 100 Action Movies from 2000-2017" = "option1",
-                                       "Top 100 Comedy Movies from 2000-2017" = "option2",
+                           choices = c("Top 70 Action Movies from 2000-2017" = "option1",
+                                       "Top 70 Comedy Movies from 2000-2017" = "option2",
                                        "Custom Network (use selections below)" = "custom"),
                            selected = "option1"),
 
@@ -27,8 +27,8 @@ sidebarLayout(
 
                conditionalPanel(
                  condition = "input.network == 'custom'",
-
-               uiOutput("genres"),
+                 
+                 uiOutput("genres"),
 
                fluidRow(
                  column(6,numericInput("movie_count", "Number of Movies:",
@@ -40,15 +40,20 @@ sidebarLayout(
                dateRangeInput('dateRange',
                                 label = 'Date range for Movies:',
                                 start = "2010/01/01", end = "2015/12/31"
-                 )),
+                 ),
+               
+               actionButton("goButton", "Find Movies:")
+               ),
 
                br(),
 
-               actionButton("goButton", "Find Movies:")
+               helpText("----------"),
+               helpText("----------"),
+               uiOutput("actors")
                 ),
 
             mainPanel(
-                #tableOutput("table")
+            
               tabsetPanel(
                 tabPanel("Network Diagram",
                   forceNetworkOutput("force", height = "660px", width = "110%")),
