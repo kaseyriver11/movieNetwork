@@ -31,10 +31,10 @@ sidebarLayout(
                uiOutput("genres"),
 
                fluidRow(
-                 column(6,numericInput("moviecount", "Number of Movies:",
+                 column(6,numericInput("movie_count", "Number of Movies:",
                               20, min = 20, max = 150)),
-                 column(6,numericInput("actorcount", "Number of Actors:",
-                              7, min = 5, max = 15))
+                 column(6,numericInput("actor_count", "Number of People:",
+                              7, min = 1, max = 20))
                  ),
 
                dateRangeInput('dateRange',

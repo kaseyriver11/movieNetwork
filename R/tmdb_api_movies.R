@@ -18,7 +18,7 @@ library(tidyr)
 pull_movie_titles <- function(api_key, genres, min_date, max_date, movie_request_lim = 100){
 
   #Set the page limit (one page returns 20 movies)
-  page_limit <- movie_request_lim / 20
+  page_limit <- ceiling(movie_request_lim / 20)
 
   #match the genre requested with the genre id
   genre_ids <- match_genre_id(genres)
@@ -43,10 +43,11 @@ pull_movie_titles <- function(api_key, genres, min_date, max_date, movie_request
 
   #The genres were a list withim a dataframe. This converts the list into a vector
   tmdb_data %>%
-    mutate(genre_ids = sapply(df$genre_ids, function(x) paste0(x, collapse = ',')) %>%
+    mutate(genre_ids = sapply(tmdb_data$genre_ids, function(x) paste0(x, collapse = ',')) %>%
              unlist) %>%
     rename(movie_id = id) %>%
-    select(-poster_path, -adult, -backdrop_path, -video)-> tmdb_data
+    select(-poster_path, -adult, -backdrop_path, -video) %>% 
+    slice(1:movie_request_lim)-> tmdb_data
 
   return(tmdb_data)
 }
