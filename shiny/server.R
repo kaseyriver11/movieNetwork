@@ -21,87 +21,59 @@ shinyServer(function(input, output, session){
     actor_count <- eventReactive(input$goButton,{
         input$actor_count
     })
-    # dframe will only rendered when the button is selected
-    dframe <- reactive({
-        
-        if(input$network == "custom"){
-            network_df <- create_network_df("6df77c0d4d734469b206f490ea084869", genres(),
-                                            dates()[1], dates()[2],
-                                            movie_request_lim = movie_count())
-
-            # network_df <- create_network_df("6df77c0d4d734469b206f490ea084869", 'Comedy',
-            #                                 '2010-01-01', '2015-01-01',
-            #                                 movie_request_lim = 100)
-            # input <- list(cast_crew = 'cast')
-
-       }
-        if(input$network == "option1"){
-            network_df <- action2000
-        }
-        if(input$network == "option2"){
-            network_df <- comedy2000
-        }
-        
-        network_df
-        
-    })
     
+    movie_w_cast_df <- reactive({
+        withProgress(message = 'Querying TMDB API', value = 0, {
+        print('pulling movies')
+        api_key = '6df77c0d4d734469b206f490ea084869'
+        movie_df <- pull_movie_titles(api_key = api_key, 
+                                      genres = genres(),
+                                      min_date = dates()[1],
+                                      max_date = dates()[2],
+                                      movie_request_lim = movie_count())
+        movie_w_cast_df <- movie_df$movie_id %>%  #apply pull_cast over each movie id
+            lapply(function(movie_id){
+                Sys.sleep(.255) # there is a limit of 40 queries/10sec (By ip address so key does not matter)
+                incProgress(1/movie_count())
+                return(pull_cast(api_key = api_key, movie_id)) }) %>%
+            bind_rows() %>% #bind each api pull into a single data.frame
+            inner_join(movie_df, by = 'movie_id')
+        
+        movie_w_cast_df
+         })
+    })
     
     output$force <- renderForceNetwork({
-        # Look at only the cast members
-        network_df <- dframe()
-        #format movie df into the name connecitons df 
-        pairwise_names <- create_name_combinations(network_df, input$cast_crew, 
-                                                   k = input$actor_count)
-        # make unique dataframe of cast/crew with ids
-        unique_names <- unique(c(pairwise_names$source_name, pairwise_names$target_name))
-        id <- 0:(length(unique_names)-1)
-        id_df <- data.frame(name = unique_names, id, stringsAsFactors = F)
-        # Add id's to the pairwise names and make a column 'value' containing the number of times
-        # that single pairwise combination occurred (how many movies did this pair work on togethor)
-        links <<- add_ids_to_names(pairwise_names, id_df) %>% as.data.frame
-        # Find Betweeness
-        between_matrix <- igraph::graph_from_data_frame(links, directed = FALSE)
-        between_value <- round(igraph::betweenness(between_matrix),2)
-        between_df <- data.frame(id = as.numeric( names(between_value) ), 
-                                 between_value, stringsAsFactors = F)
-        #Create nodes labels containing the movies, connections, and betweenness
-        node_labels <<- create_node_labels(links, id_df, between_df, network_df) %>% as.data.frame
-        popular_df <<- find_most_popular(links, id_df, between_df, network_df, 7) %>% as.data.frame
-        # Make the visual
-        forceNetwork(Links = links, Nodes = node_labels, #height = 800, width = 1000,
-                     Source = "source", Target = "target",
-                     linkWidth = JS("function(d) { return Math.pow(d.value,1.2); }"), # width of links
-                     linkDistance = JS("function(d){return d.value * 10}"), # tightness of movie clusters
-                     Value = "value", NodeID = "name", zoom = TRUE,
-                     charge = -15, legend = TRUE,
-                     colourScale = JS("d3.scaleOrdinal(d3.schemeCategory10);"),
-                     bound = FALSE,
-                     Group = "group", opacity = 0.8, fontSize = 12)
+        if(input$goButton){
+            # Look at only the cast members
+         
+            #format movie df into links
+            links <<- create_link_df(df = movie_w_cast_df(),
+                                       cast_crew_select = input$cast_crew,
+                                       k = input$actor_count)
+            
+            #Create nodes labels containing the movies, connections, and betweenness
+            node_labels <- create_node_labels(links_df = links$link_df, movie_df = movie_w_cast_df(), id_df = links$id_df) 
+            
+            # Make the visual
+            forceNetwork(Links = links$link_df, Nodes = node_labels, height = 800, width = 1000,
+                         Source = "source", Target = "target",
+                         linkWidth = JS("function(d) { return Math.pow(d.value,1.2); }"), # width of links
+                         linkDistance = JS("function(d){return d.value * 10}"), # tightness of movie clusters
+                         Value = "value", NodeID = "name", zoom = TRUE,
+                         charge = -15, legend = TRUE,
+                         colourScale = JS("d3.scaleOrdinal(d3.schemeCategory10);"),
+                         bound = TRUE,
+                         Group = "group", opacity = 0.8, fontSize = 12)
+        }
     })
     
-    output$table <- renderTable({
-        df <- network_df%>% select(-overview)
-        df
-    })
-    
-    output$table2 <- renderTable({
-        df <- popular_df
-        df
-    })
-    
-    output$actors <- renderUI({
-        # Look at only the cast members
-        network_df <- dframe()
-        #format movie df into the name connecitons df 
-        pairwise_names <- create_name_combinations(network_df, input$cast_crew, 
-                                                   k = input$actor_count)
-        # make unique dataframe of cast/crew with ids
-        unique_names <- unique(c(pairwise_names$source_name, pairwise_names$target_name))
-        selectInput("actorSelect", "Search Nodes (hover graph to update):", 
-                    choices = c("...", as.list(unique_names)))
-    })
-    
+    output$recentTable1 <-  renderDataTable({
+        if(input$goButton){
+            create_output_df(links_df = links$link_df, movie_df = movie_w_cast_df())
+        }
+        })
     
     
 })
+

@@ -26,6 +26,11 @@ create_network_df <- function(api_key, genres, min_date, max_date, movie_request
   return(final_df)
 }
 
+# Things to add
+# Clustering Coefficient (Could be interesting to compare between genres)
+# select between a number of centrality measures (Degree, Betweenness, Closeness, Eigenvector)
+
+#
 
 
 

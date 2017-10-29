@@ -13,8 +13,6 @@
 #' @return A data frame containing movie titles along with movie attributes
 #' @export
 #'
-library(dplyr)
-library(tidyr)
 pull_movie_titles <- function(api_key, genres, min_date, max_date, movie_request_lim = 100){
 
   #Set the page limit (one page returns 20 movies)
@@ -46,6 +44,7 @@ pull_movie_titles <- function(api_key, genres, min_date, max_date, movie_request
     mutate(genre_ids = sapply(tmdb_data$genre_ids, function(x) paste0(x, collapse = ',')) %>%
              unlist) %>%
     rename(movie_id = id) %>%
+    mutate(movie_id = as.character(movie_id)) %>% 
     select(-poster_path, -adult, -backdrop_path, -video) %>% 
     slice(1:movie_request_lim)-> tmdb_data
 

@@ -10,19 +10,22 @@ pull_cast <- function(api_key, movie_id){
 
   url <- create_cast_url(api_key, movie_id)
   cast_crew_data <- jsonlite::fromJSON(url, simplifyDataFrame = T)
-
-  cast_crew_data$cast %>%
-    select(id, name, character) %>%
-    mutate(cast_crew = 'cast') %>%
-    rename(role = character) %>%
-    rbind(  cast_crew_data$crew %>%
-              select(id, name, job) %>%
-              mutate(cast_crew = 'crew') %>%
-              rename(role = job)  ) %>%
-    mutate(movie_id = movie_id) -> cast_crew_data
-
-
-  return(cast_crew_data)
+  
+  if(is.data.frame(cast_crew_data$crew) & is.data.frame(cast_crew_data$cast)){
+      cast_crew_data$cast %>%
+        select(id, name, character) %>%
+        mutate(cast_crew = 'cast') %>%
+        rename(role = character) %>%
+        rbind(  cast_crew_data$crew %>%
+                  select(id, name, job) %>%
+                  mutate(cast_crew = 'crew') %>%
+                  rename(role = job)  ) %>%
+        mutate(movie_id = as.character(movie_id)) %>% 
+        mutate(id = as.character(id))-> cast_crew_data
+    
+      return(cast_crew_data)
+  }
+  
 }
 
 
