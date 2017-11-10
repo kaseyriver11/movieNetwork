@@ -8,7 +8,6 @@ shinyServer(function(input, output, session){
                        multiple = TRUE, options = list(maxItems = 3))
     })
     
-    # Using the action button
     genres <- eventReactive(input$goButton, {
         input$genreSelect
     })
@@ -32,12 +31,12 @@ shinyServer(function(input, output, session){
                                       max_date = dates()[2],
                                       movie_request_lim = movie_count())
         movie_w_cast_df <- movie_df$movie_id %>%  #apply pull_cast over each movie id
-            lapply(function(movie_id){
-                Sys.sleep(.255) # there is a limit of 40 queries/10sec (By ip address so key does not matter)
-                incProgress(1/movie_count())
-                return(pull_cast(api_key = api_key, movie_id)) }) %>%
-            bind_rows() %>% #bind each api pull into a single data.frame
-            inner_join(movie_df, by = 'movie_id')
+                            lapply(function(movie_id){
+                                Sys.sleep(.255) # there is a limit of 40 queries/10sec (By ip address so key does not matter)
+                                incProgress(1/movie_count())
+                                return(pull_cast(api_key = api_key, movie_id)) }) %>%
+                            bind_rows() %>% #bind each api pull into a single data.frame
+                            inner_join(movie_df, by = 'movie_id')
         
         movie_w_cast_df
          })
@@ -48,7 +47,7 @@ shinyServer(function(input, output, session){
             # Look at only the cast members
          
             #format movie df into links
-            links <<- create_link_df(df = movie_w_cast_df(),
+            links <- create_link_df(df = movie_w_cast_df(),
                                        cast_crew_select = input$cast_crew,
                                        k = input$actor_count)
             
@@ -69,9 +68,12 @@ shinyServer(function(input, output, session){
     })
     
     output$recentTable1 <-  renderDataTable({
-        if(input$goButton){
-            create_output_df(links_df = links$link_df, movie_df = movie_w_cast_df())
-        }
+        links <- create_link_df(df = movie_w_cast_df(),
+                                 cast_crew_select = input$cast_crew,
+                                 k = input$actor_count)
+        
+        output_df <- create_output_df(links_df = links$link_df, movie_df = movie_w_cast_df())
+        output_df
         })
     
     

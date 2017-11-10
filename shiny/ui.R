@@ -19,14 +19,11 @@ shinyUI(
                                                       selected = "cast"))
                              ),
                              
-                             conditionalPanel(
-                                 condition = TRUE,
-                                 
                                  uiOutput("genres"),
                                  
                                  fluidRow(
                                      column(6,numericInput("movie_count", "Number of Movies:",
-                                                           20, min = 20, max = 150)),
+                                                           20, min = 20, max = 300)),
                                      column(6,numericInput("actor_count", "Number of People:",
                                                            7, min = 1, max = 20))
                                  ),
@@ -36,8 +33,7 @@ shinyUI(
                                                 start = "2010/01/01", end = "2015/12/31"
                                  ),
                                  
-                                 actionButton("goButton", "Find Movies:")
-                             ),
+                                 actionButton("goButton", "Find Movies:"),
                              
                              br(),
                              

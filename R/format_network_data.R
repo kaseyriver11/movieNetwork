@@ -31,7 +31,7 @@ create_link_df <- function(df, cast_crew_select, k = 20){
                         .$name_comb %>% 
                         bind_rows() %>% 
                         mutate_all(funs(as.character))
-    print('third_df')
+
     #We have to give new id's because the force network diagram requires that the ID's start at 0
     id_df <- name_link_df %>% 
                    gather() %>% 
