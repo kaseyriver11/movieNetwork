@@ -1,65 +1,65 @@
 
-
 #' create pairwise name combinations for each movie
-#' @description Take the data frame created by create_network_df and return all
-#'  combinations of actors or cast within each movie
+#' @description Take a data frame and return all combinations of actors or cast
+#'  within each movie
 #' @param df data frame created by create_network_df function
-#' @param cast_crew_select value of 'cast' or 'crew' dependent on whether the user wanted a cast network or crew network
-#' @param k The Number of cast or crew to take. We make this an option because it can be computationally
-#'  expensive to make connections between a long list of cast or crew members
+#' @param cast_crew value of 'cast' or 'crew'
+#' @param k The Number of cast or crew to take. We make this an option because
+#' it can be computationally expensive to make too many connections
 #' @return a dataframe of each combination of cast and crew names
 #' @export
 #' 
-
-create_link_df <- function(df, cast_crew_select, k = 20){
+create_link_df <- function(df, cast_crew, k = 20){
     
-    #Filter to only keep the top k people, If this isn't done,
-    #The network will become too large to properly display
-    df %>%
-        filter(cast_crew == cast_crew_select) %>% 
-        group_by(movie_id) %>% 
-        slice(1:k) -> top_k_people
-    #creates all 2-way name combinations, to create links between people who worked on/
-    # in the same movie
+    # Filter to only keep the top k people
+    names <- df %>%
+      filter(cast_crew == cast_crew) %>% 
+      group_by(name) %>%
+      summarise(c=n()) %>%
+      arrange(desc(c)) 
+    
+    df <- df %>%
+      filter(name %in% names$name[1:k])
+
+    # creates all 2-way name combinations
     name_link_df <- df %>% 
-                        filter(cast_crew == cast_crew_select) %>% 
-                        filter(name %in% top_k_people$name) %>% 
-                        select(movie_id, name) %>% 
-                        distinct() %>% #sometimes people are recorded twice in the same movie
-                        group_by(movie_id) %>% 
-                        summarise(name_comb = name_combinations(name)) %>%
-                        .$name_comb %>% 
-                        bind_rows() %>% 
-                        mutate_all(funs(as.character))
+      select(movie_id, name) %>% 
+      distinct() %>% # sometimes people are recorded twice in the same movie
+      group_by(movie_id) %>%
+      summarise(name_comb = name_combinations(name)) %>%
+      .$name_comb %>%
+      bind_rows() %>%
+      mutate_all(list(as.character))
 
-    #We have to give new id's because the force network diagram requires that the ID's start at 0
-    id_df <- name_link_df %>% 
-                   gather() %>% 
-                   select(value) %>% 
-                   distinct() %>% 
-                   mutate(id = 0:(n()-1)) %>% 
-                   rename(name = value)
+    # force network diagram requires that the ID's start at 0
+    id_df <- name_link_df %>%
+      gather() %>%
+      select(value) %>%
+      distinct() %>%
+      mutate(id = 0:(n()-1)) %>%
+      rename(name = value)
     
-    #add back the id's to names
-    name_id_link_df <- name_link_df %>% 
-                        inner_join( id_df %>% 
-                                        select(id, name) %>% 
-                                        distinct(),
-                                    by = c('source_name' = 'name')) %>% 
-                        rename(source = id) %>% 
-                        inner_join( id_df %>% 
-                                        select(id, name) %>% 
-                                        distinct,
-                                    by = c('target_name' = 'name') ) %>% 
-                        rename(target = id) %>% 
-                        mutate(group_id = paste(source, target, sep = '_')) %>% 
-                        group_by(group_id) %>% 
-                        mutate(value = n()) %>% 
-                        summarise_all(funs(.[1])) %>% 
-                        select(source, target, value, source_name, target_name) %>% 
-                        arrange(source)
+    # add back the id's to names
+    name_id_link_df <-
+      name_link_df %>%
+      inner_join( id_df %>%
+                    select(id, name) %>%
+                    distinct(),
+                  by = c('source_name' = 'name')) %>%
+      rename(source = id) %>%
+      inner_join( id_df %>%
+                    select(id, name) %>%
+                    distinct,
+                  by = c('target_name' = 'name') ) %>%
+      rename(target = id) %>%
+      mutate(group_id = paste(source, target, sep = '_')) %>%
+      group_by(group_id) %>%
+      mutate(value = n()) %>%
+      summarise_all(funs(.[1])) %>%
+      select(source, target, value, source_name, target_name) %>%
+      arrange(source)
     
-        return(list(link_df = name_id_link_df, id_df = id_df))
+    return(list(link_df = name_id_link_df, id_df = id_df))
 }
 
 
@@ -71,15 +71,15 @@ create_link_df <- function(df, cast_crew_select, k = 20){
 name_combinations <- function(name_vect){
     if(length(name_vect) > 1){
         combn(name_vect, 2) %>%
-            apply(2,sort) %>% 
-            t() %>% 
-            data.frame('source_name' = .[,1], 'target_name' = .[,2]) %>% 
-            select(source_name, target_name) %>% 
-            list %>% 
+            apply(2,sort) %>%
+            t() %>%
+            data.frame('source_name' = .[,1], 'target_name' = .[,2]) %>%
+            select(source_name, target_name) %>%
+            list %>%
             return()
-    } else {
-        return(list(data.frame()))
-    }
+        } else {
+            return(list(data.frame()))
+        }
 }
 
 
@@ -92,31 +92,31 @@ name_combinations <- function(name_vect){
 #'@export
 
 create_node_labels <- function(links_df,  movie_df, id_df){
-node_label_df <- links_df %>% 
-                 select(source_name, target_name) %>%   #select pairwise names
-                 gather(value = 'name') %>%  #Make them into one long column (to count n connectione) 
-                 count(name) %>% #count number of connections
-                 inner_join(movie_df %>%  #join on the network dataframe and id dataframe for information needed
-                            select(title, name), # for aggregation
-                            by = 'name') %>% 
-                 group_by(name) %>%   #group by person and calculate information needed for node labels
-                 summarise(connections = n[1],
-                           movies = paste(unique(title), collapse = ' | '),
-                           group = length(unique(title)),
-                           size = 1) %>%
-                  rename(person_name = name) %>% 
-                  mutate(name = paste0('Cast: ', person_name,
-                                       ', Movies: ', movies,
-                                       ', Connections: ', connections)) %>%
-                  select(person_name, name, group, size) %>% 
-                  data.frame()
+node_label_df <-
+    links_df %>%
+    select(source_name, target_name) %>%   # select pairwise names
+    gather(value = 'name') %>%  # Make them into one long column (to count n connectione) 
+    count(name) %>% # count number of connections
+    inner_join(movie_df %>%  #join on the network dataframe and id dataframe for information needed
+                   select(title, name), # for aggregation
+               by = 'name') %>%
+    group_by(name) %>%   #group by person and calculate information needed for node label
+    summarise(connections = n[1],
+              movies = ifelse(length(unique(title)) > 3,
+                              paste(paste(unique(title)[1:3], collapse = ' | '), " ..."),
+                              paste(unique(title), collapse = ' | ')),
+              group = length(unique(title)),
+              size = 1) %>%
+    rename(person_name = name) %>%
+    mutate(name = paste0(person_name, ': ', movies)) %>%
+    select(person_name, name, group, size) %>% data.frame()
 
-node_label_df_id <- node_label_df %>% 
-                        inner_join(id_df, by = c('person_name' = 'name')) %>% 
-                        select(id, name, group, size) %>% 
-                        arrange(id)
-          
-     return(node_label_df_id)
+    node_label_df_id <-
+        node_label_df %>%
+        inner_join(id_df, by = c('person_name' = 'name')) %>% 
+        select(id, name, group, size) %>%
+        arrange(id)
+    return(node_label_df_id)
 }
 
 
